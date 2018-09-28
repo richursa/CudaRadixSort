@@ -121,23 +121,6 @@ int *compact(int *d_array,int numberOfElements,int bit)
     scatter<<<1600,500>>>(d_array,d_scanArray,d_predicateArrry,d_scatteredArray, numberOfElements,offset);
     return d_scatteredArray;
 }
-int *compact2(int *d_array,int numberOfElements,int bit)
-{
-    int offset;
-    int *d_predicateArrry;
-    cudaMalloc((void**)&d_predicateArrry,sizeof(int)*numberOfElements);
-    predicateDevice<<<1600,500>>>(d_array,d_predicateArrry,numberOfElements,bit,1);
-    int *d_scanArray;
-    d_scanArray = hillisSteeleScanHost(d_predicateArrry,numberOfElements);
-    int *d_scatteredArray;
-    cudaMalloc((void**)&d_scatteredArray,sizeof(int)*numberOfElements);
-    scatter<<<1600,500>>>(d_array,d_scanArray,d_predicateArrry,d_scatteredArray, numberOfElements,0);
-    cudaMemcpy(&offset,d_scanArray+numberOfElements-1,sizeof(int),cudaMemcpyDeviceToHost);
-    predicateDevice<<<1600,500>>>(d_array,d_predicateArrry,numberOfElements,bit,0);
-    d_scanArray = hillisSteeleScanHost(d_predicateArrry,numberOfElements);
-    scatter<<<1600,500>>>(d_array,d_scanArray,d_predicateArrry,d_scatteredArray, numberOfElements,offset);
-    return d_scatteredArray;
-}
 int offset;
 int *positivenegativesplit(int *d_array,int numberOfElements,int bit,int bitset)
 {   
@@ -159,7 +142,7 @@ int * radixSort(int *d_array , int numberOfElements)
     for(int i=0;i<sizeof(int)*8;i++)
     {
         bit = 1<<i;
-        d_negativeArray = compact2(d_negativeArray,offset,bit);
+        d_negativeArray = compact(d_negativeArray,offset,bit);
     }
     int *d_postiveArray = positivenegativesplit(d_array,numberOfElements,1L<<31,0);
     for(int i=0;i<sizeof(int)*8;i++)
